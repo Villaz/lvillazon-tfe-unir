@@ -1,0 +1,42 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: birds
+      MYSQL_USER: user_user
+      MYSQL_PASSWORD: user_birds
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - mlflow-net
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    container_name: mlflow-server
+    depends_on:
+      - mysql
+    environment:
+      MLFLOW_TRACKING_URI: mysql+pymysql://user_user:user_birds@mysql:3306/birds
+      ARTIFACT_ROOT: /mlflow/artifacts
+    command: >
+      sh -c '
+      pip install pymysql && mlflow server --port 5000 --host 0.0.0.0 --allowed-hosts "*" --cors-allowed-origins "*" --backend-store-uri=mysql+pymysql://user_user:user_birds@mysql:3306/birds'
+
+    ports:
+      - "5010:5000"
+    volumes:
+      - mlflow_artifacts:/mlflow/artifacts
+    networks:
+      - mlflow-net
+
+
+volumes:
+  mysql_data:
+  mlflow_artifacts:
+
+networks:
+  mlflow-net:

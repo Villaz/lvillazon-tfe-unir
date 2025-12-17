@@ -1,0 +1,18 @@
+FROM python:3.10-slim
+
+# Instalar MLflow y PyMySQL
+RUN pip install --no-cache-dir mlflow pymysql cryptography
+
+# Crear un usuario no-root opcional
+RUN useradd -ms /bin/bash mlflow
+USER mlflow
+
+WORKDIR /mlflow
+
+EXPOSE 5000
+
+CMD ["mlflow", "server",
+     "--backend-store-uri", "mysql+pymysql://mlflow:mlflow_password@mysql:3306/mlflow_db",
+     "--default-artifact-root", "/mlflow/artifacts",
+     "--host", "0.0.0.0",
+     "--port", "5000"]
